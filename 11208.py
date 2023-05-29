@@ -1,6 +1,5 @@
 from collections import deque
 
-
 def dfs_free(matrix, visited, i, j, parking_slots, parking_busy, airports_main):
 
     visited[i][j] = True
@@ -21,7 +20,6 @@ def dfs_free(matrix, visited, i, j, parking_slots, parking_busy, airports_main):
 
 
 def inside(matrix_bool,parking_main, parking_busy, parking_aux, event, airports_main):
-
         visited = [[False for element in range(len(matrix_bool[0]))] for element in range(len(matrix_bool))]
 
         for i in range(len(matrix_bool)):
@@ -31,6 +29,7 @@ def inside(matrix_bool,parking_main, parking_busy, parking_aux, event, airports_
                     busy = dfs_free(matrix_bool, visited, i, j, parking_main, parking_busy, airports_main)
                     if busy is not None:
                         parking_aux.appendleft((event, busy))
+                        saved_path = busy
                         matrix_bool[busy[0]][busy[1]] = False
                         parking_main.remove(busy)
                         print("Este es el evento: ", event)
@@ -38,7 +37,7 @@ def inside(matrix_bool,parking_main, parking_busy, parking_aux, event, airports_
                         print("Este es Parking_aux: ", parking_aux)
                         print("Este es parking_main: ", parking_main)
                         print("------------")
-                        return parking_aux
+                        return parking_aux, saved_path
 
 
 def dfs_busy(matrix, visited, i, j, parking_main, parking_busy, parking_slot, airports_main):
@@ -57,20 +56,20 @@ def dfs_busy(matrix, visited, i, j, parking_main, parking_busy, parking_slot, ai
                 result = res  # Si el resultado de la llamada recursiva no es None, establecemos result en ese valor
                 break
 
-    return parking_slot
+    return result
 
 
 
 def out(matrix_bool,parking_main, parking_busy, parking_aux, event, airports_main):
     visited = [[False for element in range(len(matrix_bool[0]))] for element in range(len(matrix_bool))]
     event *= -1
+    print(event)
     parking_slot = 0
 
     for item in parking_aux:
         if item[0] == event:
             parking_slot = item[1]
-
-    print(parking_slot)
+            break
 
     for i in range(len(matrix_bool)):
         for j in range(len(matrix_bool[0])):
@@ -79,7 +78,7 @@ def out(matrix_bool,parking_main, parking_busy, parking_aux, event, airports_mai
             if matrix_bool[i][j] == False and (i,j) == parking_slot:
                 busy = dfs_busy(matrix_bool, visited, i, j, parking_main, parking_busy,parking_slot, airports_main)
                 if busy is not None:
-                    ##parking_aux.remove(busy)
+                    parking_aux.remove((event, busy))
                     matrix_bool[busy[0]][busy[1]] = True
                     parking_main.append(busy)
                     event *= -1
@@ -98,26 +97,33 @@ def out(matrix_bool,parking_main, parking_busy, parking_aux, event, airports_mai
 def pathway(matrix_main, matrix_free, matrix_bool, parking_main, airports_main, events_main):
     parking_aux = deque()
     parking_busy = deque()
+    saved_path = deque()
 
     for event in events_main:
 
         if event > 0:
             print("Este es un evento de Entrada")
-            inside(matrix_bool, parking_main, parking_busy, parking_aux, event, airports_main)
+            ##Me falta añadir todos los parqueaderos que uso y hacer la validacion de YES o NO
+            obteined_data = inside(matrix_bool, parking_main, parking_busy, parking_aux, event, airports_main)
+            saved_path.append(obteined_data[1])
+            print("EL CAMINO GUARDADO ES: " ,saved_path)
+
 
         else:
             print("Este es un evento de Salida")
             out(matrix_bool, parking_main, parking_busy, parking_aux, event, airports_main)
 
+    return saved_path
+
 
 def print_main(matrix_main, matrix_free, matrix_bool, parking_main, aiports_main, events_main):
     print("----------------------------")
-    """print("Matrix: ")
+    print("Matrix: ")
     print(matrix_main)
     print("----------------------------")
     print("Matrix Free: ")
     print(matrix_free)
-    print("----------------------------") """
+    print("----------------------------") 
     print("Matrix Bool: ")
     print(matrix_bool)
     print("----------------------------")
@@ -182,15 +188,24 @@ def main():
         ##events_main = deque(map(int, input().split()))
         events_main = [int(x) for x in input().split()]
 
-
-
-        """for i in events_main:
-            if events_main[i] < 0:
-                events_main[i] *= -1"""
-
         print_main(matrix_main, matrix_free, matrix_bool, parking_main, airports_main, events_main)
-        pathway(matrix_main, matrix_free, matrix_bool, parking_main, airports_main, events_main)
+        saved_path = pathway(matrix_main, matrix_free, matrix_bool, parking_main, airports_main, events_main)
 
+        if saved_path != None:
+            saved_path_fixed = []
+            for element in saved_path:
+                fila = element[0]
+                columna = element[1]
+
+                if matrix_main[fila][columna] > 0:
+                    saved_path_fixed.append(matrix_main[fila][columna])
+
+            formatted = " ".join([f"{num:02}" for num in saved_path_fixed])
+            print("Case", "1:", "Yes")
+            print(formatted + "\n")
+        else:
+            print("NO HAY SOLUCIÓN")
+        ##Me falta verificar como voy a devolver el resultado, y si es así, transformalo a la matriz original recibida
 
 if __name__ == '__main__':
     main()
