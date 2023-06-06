@@ -1,12 +1,11 @@
 from collections import deque
 
-
 def dfs_free(matrix, visited, i, j, parking_slots, parking_busy, airports_main, exception):
     rows = len(matrix)
     cols = len(matrix[0])
     visited[i][j] = True
 
-    if (i, j) in parking_slots and (i,j) not in exception:
+    if (i, j) in parking_slots and (i, j) not in exception:
         parking_busy.append((i, j))
         return i, j
 
@@ -21,28 +20,39 @@ def dfs_free(matrix, visited, i, j, parking_slots, parking_busy, airports_main, 
     return result
 
 
-def inside(matrix_bool, parking_main, parking_busy, parking_aux, event, events_main, airports_main, exception, saved_path):
+def inside(matrix_bool, parking_main, parking_busy, parking_aux, event, events_main, airports_main, exception,
+           saved_path):
     visited = [[False for element in range(len(matrix_bool[0]))] for element in range(len(matrix_bool))]
 
     event_index = events_main.index(event)
-
 
     for i in range(len(matrix_bool)):
         for j in range(len(matrix_bool[0])):
             if (i, j) in airports_main:
                 busy = dfs_free(matrix_bool, visited, i, j, parking_main, parking_busy, airports_main, exception)
-                i = 1
+                event_minus = 1
                 while busy is None and event_index > 0:
-                    event = events_main[event_index - i]
-                    help_back = parking_aux.popleft()
-                    visited = [[False for element in range(len(matrix_bool[0]))] for element in range(len(matrix_bool))]
-                    matrix_bool[help_back[1][0]][help_back[1][1]] = True
-                    parking_main.append(help_back[1])
-                    exception.appendleft(help_back[1])
-                    parking_busy.remove(help_back[1])
-                    saved_path.pop()
-                    busy = dfs_free(matrix_bool, visited, i, j, parking_main, parking_busy, airports_main, exception)
-                    i += 1
+                    if event > 0:
+                        if len(parking_aux) > 0:
+                            help_back = parking_aux.popleft()
+                            visited = [[False for element in range(len(matrix_bool[0]))] for element in
+                                       range(len(matrix_bool))]
+                            matrix_bool[help_back[1][0]][help_back[1][1]] = True
+                            parking_main.append(help_back[1])
+                            exception.appendleft(help_back[1])
+                            parking_busy.remove(help_back[1])
+                            saved_path.pop()
+                            busy = dfs_free(matrix_bool, visited, i, j, parking_main, parking_busy, airports_main,
+                                            exception)
+                            event_minus += 1
+                            continue
+                        else:
+                            busy = None
+                            break
+                    elif event < 0:
+                        parking_aux = out(matrix_bool, parking_main, parking_busy, parking_aux, event, airports_main)
+                        event_minus += 1
+                        continue
 
                 if busy is not None:
                     if len(exception) > 0:
@@ -114,9 +124,7 @@ def pathway(matrix_main, matrix_free, matrix_bool, parking_main, airports_main, 
             if obteined_data is None:
                 saved_path = None
             else:
-                """if obteined_data[1] in saved_path:
-                    saved_path.remove(obteined_data[1])"""
-                saved_pat = obteined_data[1]
+                saved_path = obteined_data[1]
                 event = obteined_data[2]
 
 
@@ -171,7 +179,7 @@ def main():
                 events_main = [int(x) for x in input().split()]
                 saved_path = pathway(matrix_main, matrix_free, matrix_bool, parking_main, airports_main, events_main)
         else:
-            saved_path = None
+            break
 
         if saved_path is not None:
             saved_path_fixed = []
